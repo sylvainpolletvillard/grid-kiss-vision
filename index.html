@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Hello OpenCV.js</title>
+    <script defer src="lib/opencv.js"></script>
+    <script defer src="main.js"></script>
+</head>
+<body>
+<h2>Grid Kiss Vision with OpenCV.js</h2>
+<div>
+    <label> Select an image: </label> <input type="file" id="fileInput" name="file" />
+    <br>
+    <img id="source" alt="No Image" style="height: 400px" />
+    <canvas id="processed_image" ></canvas>
+    <canvas id="contours"></canvas>
+    <br>
+    <p id="log"></p>
+    <textarea id="output" cols="60" rows="20"></textarea>
+</div>
+
+</body>
+</html>
