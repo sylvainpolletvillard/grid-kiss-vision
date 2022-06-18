@@ -1,12 +1,11 @@
 const imgSource = document.getElementById("source")
-const output = document.getElementById("output")
 
-document.getElementById("fileInput").addEventListener("change", (e) => {
+document.getElementById("fileinput").addEventListener("change", (e) => {
     imgSource.onload = () => processImage(imgSource)
     setImageSource(imgSource, e.target.files[0])
 }, false);
 
-const log = x => { document.getElementById("log").textContent = x };
+const log = x => { document.getElementById("log").textContent += x };
 
 const setImageSource = (img, source) => { img.src = URL.createObjectURL(source) }
 
@@ -26,7 +25,14 @@ const processImage = (imgElement) => {
 
     log(zones.length + " zones detected");
 
-    convertZonesToAscii(zones, image.size());
+    const size = image.size()
+    const aspectRatio = size.width / size.height * 2 // *2 because line height is twice big than character width
+    const gridWidth = Number(document.getElementById("gridwidth").value)    
+    const gridHeight = Math.round(gridWidth / aspectRatio)
+
+    zones = adjustZones(zones, size, gridWidth, gridHeight)
+
+    convertZonesToAscii(zones, gridWidth, gridHeight);
 
     image.delete()
 }
@@ -140,17 +146,15 @@ const findZones = (image) => {
     return zones
 }
 
-const convertZonesToAscii = (zones, total) => {
+function adjustZones(zones, size, gridWidth, gridHeight){
     console.log(zones);
-
-    const gridSize = 12;
 
     for(let zone of zones) {
         let
-            x = zone.corners[0].x / total.width * gridSize,
-            y = zone.corners[0].y / total.height * gridSize,
-            x2 = zone.corners[2].x / total.width * gridSize,
-            y2 = zone.corners[2].y / total.height * gridSize;
+            x = zone.corners[0].x / size.width * gridWidth,
+            y = zone.corners[0].y / size.height * gridHeight,
+            x2 = zone.corners[2].x / size.width * gridWidth,
+            y2 = zone.corners[2].y / size.height * gridHeight;
 
         [x, x2] = [x, x2].sort((a, b) => a - b);
         [y, y2] = [y, y2].sort((a, b) => a - b);
@@ -161,40 +165,64 @@ const convertZonesToAscii = (zones, total) => {
     // precision adjustment
     for(let a of zones) {
         ['x','x2','y','y2'].forEach(coord => {
-            let aligned = zones.filter(b => Math.abs(a[coord] - b[coord]) < 1.5);
+            const deltaPrecision = coord.startsWith('x') ? gridWidth / 12 : gridHeight / 12
+            let aligned = zones.filter(b => Math.abs(a[coord] - b[coord]) < deltaPrecision);
             if(aligned.length > 1){
-                let mean = average(aligned.map(z => z[coord]))
-                console.log("aligning",coord, mean, aligned);
-                aligned.forEach(z => { z[coord] = mean })
+                let mean = average(aligned.map(zone => zone[coord]))
+                console.log("aligning", coord, mean, aligned);
+                aligned.forEach(zone => { zone[coord] = mean })
             }
         })
     }
 
-    const aspectRatio = 3; // x / y
-    const grid = Array(gridSize+1).fill(0).map(() => Array((gridSize+1)*aspectRatio).fill(" "))
+    // rounding to indexes
 
-    for(let zone of zones) {
-        let
-            x = Math.round(zone.x) * aspectRatio,
-            y = Math.round(zone.y),
-            x2 = Math.round(zone.x2) * aspectRatio,
-            y2 = Math.round(zone.y2);
+    const indexCols = new Set()
+    const indexRows = new Set()
+    for(let zone of zones){
+        zone.x = Math.round(zone.x)
+        indexCols.add(zone.x)
 
-        grid[y][x] = "+"
-        grid[y][x2] = "+"
-        grid[y2][x] = "+"
-        grid[y2][x2] = "+"
-
-        for(let i=x+1; i<x2; i++){
-            grid[y][i] = "-"
-            grid[y2][i] = "-"
-        }
-
-        for(let j=y+1; j<y2; j++){
-            grid[j][x] = "|"
-            grid[j][x2] = "|"
-        }
+        zone.y = Math.round(zone.y)
+        indexRows.add(zone.y)
     }
 
+    console.log({ indexCols, indexRows })
+
+    // forcing index separation between x-x2 y-y2
+    for(let zone of zones){
+        zone.x2 = Math.round(zone.x2)
+        if(indexCols.has(zone.x2)) zone.x2 -= 1
+        zone.y2 = Math.round(zone.y2)
+        if(indexRows.has(zone.y2)) zone.y2 -= 1
+    }
+
+    return zones
+}
+
+const convertZonesToAscii = (zones, gridWidth, gridHeight) => {
+    let grid = Array(gridHeight+1).fill(0).map(() => Array((gridWidth+1)).fill(" "))
+
+    for(let zone of zones) {
+        grid[zone.y][zone.x] = "+"
+        grid[zone.y][zone.x2] = "+"
+        grid[zone.y2][zone.x] = "+"
+        grid[zone.y2][zone.x2] = "+"
+
+        for(let i=zone.x+1; i<zone.x2; i++){
+            grid[zone.y][i] = "-"
+            grid[zone.y2][i] = "-"
+        }
+
+        for(let j=zone.y+1; j<zone.y2; j++){
+            grid[j][zone.x] = "|"
+            grid[j][zone.x2] = "|"
+        }
+    }    
+
+    // remove empty rows
+    grid = grid.filter(row => !row.every(char => char === " "))
+
+    const output = document.getElementById("output")
     output.value = 'grid-kiss:\n'+grid.map(row => '  "' + row.join("") + '"').join("\n")+";"
 }
