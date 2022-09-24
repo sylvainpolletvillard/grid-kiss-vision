@@ -1,24 +1,28 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Hello OpenCV.js</title>
-    <script defer src="lib/opencv.js"></script>
-    <script defer src="main.js"></script>
-</head>
-<body>
-<h2>Grid Kiss Vision with OpenCV.js</h2>
-<div>
-    <label> Select an image: <input type="file" id="fileinput" name="file" /></label> 
-    <label> Set grid width: <input type="number" id="gridwidth" name="gridwidth" value="48"></label> 
-    <br>
-    <img id="source" alt="No Image" style="height: 400px" />
-    <canvas id="processed_image" ></canvas>
-    <canvas id="contours"></canvas>
-    <br>
-    <p id="log"></p>
-    <textarea id="output" cols="60" rows="20"></textarea>
-</div>
-
-</body>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grid Kiss Vision</title>
+  </head>
+  <body>
+    <div id="app">
+      <h1>Grid Kiss Vision with OpenCV.js and Tesseract.js</h1>
+      <div>
+          <label>Select an image: <input type="file" id="fileinput" name="file" /></label> 
+          <label>Set grid width: <input type="number" id="gridwidth" name="gridwidth" value="48"></label> 
+          <br>
+          <img id="source" alt="No Image" style="height: 400px" />
+          <canvas id="processed_image" ></canvas>
+          <div id="zone_names"></div>
+          <canvas id="contours"></canvas>
+          <br>
+          <p id="log"></p>
+          <textarea id="output" cols="60" rows="20"></textarea>
+      </div>
+    </div>
+    <script src="lib/opencv.js"></script>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>
