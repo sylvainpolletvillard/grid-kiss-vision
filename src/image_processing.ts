@@ -4,7 +4,7 @@ export function processImage(imgElement: HTMLImageElement) {
     const image: Mat = cv.imread(imgElement)
     convertToGrayScale(image)
     applyBlur(image)
-    resizeImage(image, 400)
+    //resizeImage(image, 400)
     applyThreshold(image)
     return image
 }
